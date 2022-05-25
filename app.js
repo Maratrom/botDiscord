@@ -53,7 +53,7 @@ client.on('voiceStateUpdate', async (oldMember, newMember) => {
             let user = users.find(user => user.id == newMember.member.user.id);
 
             const diff = await calculTime(user.arrival - user.departure);
-            client.channels.cache.get('973157908625895447').send(newMember.member.toString() + await setSentence(diff, "in"));
+            client.channels.cache.get('973157908625895447').send(newMember.member.toString() + await setSentence(diff, "in") + "EHEEEEEHHEEHHEHE OOOHOHOHOHOHOHO");
 
         } else if (newMember.channel == undefined) {
             const newUser = {
