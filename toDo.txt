@@ -1,0 +1,9 @@
+Stocker le temps passé au total par utilisateur dans servers.json :
+
+"users": [
+    {id, temps_total},
+    {id, temps_total},
+    ...
+]
+
+

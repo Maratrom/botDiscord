@@ -2,7 +2,7 @@
   "name": "agenda",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js"
@@ -15,5 +15,8 @@
     "discord-api-types": "^0.32.1",
     "discord.js": "^13.6.0",
     "nodemon": "^2.0.16"
+  },
+  "engines": {
+    "node": "16.14.0"
   }
 }
