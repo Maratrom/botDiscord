@@ -1,5 +1,6 @@
 const importing = require('./#importing');
 
+
 client.on('ready', async () => {
     let servers = JSON.parse(await readFile('./Files/servers.json')).servers;
     for (server of servers) {
@@ -104,6 +105,7 @@ client.on('messageCreate', async message => {
             ➜ \`${servers[index].prefix}here\` : Defini ce salon comme salon principal du bot
             ➜ \`${servers[index].prefix}target\` : Defini l'utilisateur cible du bot (\`all\`, \`@user\`)
             ➜ \`${servers[index].prefix}online\` : Defini si le bot est en ligne ou non (\`true\`, \`false\`)
+            ➜ \`${servers[index].prefix}voctime\` : Affiche le temps passé dans un salon vocal par l'utilisateur mentionné 
             `);
             } else {
                 switch (commandArgs[0]) {
@@ -127,6 +129,16 @@ client.on('messageCreate', async message => {
                         break;
                     case "online":
                         message.reply(`Défini si le bot envoie un message quand il est en ligne : \`${servers[index].prefix}online [true/false]\``);
+                        break;
+                    case "voctime":
+                        const member = await message.guild.members.fetch(client.user);
+                        if (member.joinedAt.valueOf() > process.env.VOCTIME_RELEASE_TIMESTAMP) {
+                            var since = `${member.joinedAt.getDate()} ${translate(member.joinedAt.getMonth(), "mois")} ${member.joinedAt.getFullYear()}`
+                        } else {
+                            var since = `${process.env.VOCTIME_RELEASE_DAY} ${translate(process.env.VOCTIME_RELEASE_MONTH - 1, "mois")} ${process.env.VOCTIME_RELEASE_YEAR}`
+                        }
+
+                        message.reply(`Affiche le temps passé dans un salon vocal par l'utilisateur mentionné (depuis le \`${since}\`)\nPar exemple : \`${servers[index].prefix}voctime \`${client.user.toString()}`);
                         break;
                     default:
                         message.reply(`Commande inconnue \`bouffon\``);
@@ -197,16 +209,16 @@ client.on('messageCreate', async message => {
             }
             else {
                 if (commandArgs[0] == "add") {
-                    if (commandArgs[1].startsWith("<@") && commandArgs[1].endsWith(">")) {
-                        var userId = commandArgs[1].replace("<@", "").replace(">", "");
+                    const userTarget = message.mentions.users.first();
+                    if (message.mentions.users.first()) {
                         if (servers[index].target[0] == "all") {
                             servers[index].target.splice(0, 1);
-
                         }
-                        if (servers[index].target.find(id => id == userId)) {
+
+                        if (servers[index].target.find(id => id == userTarget.id)) {
                             message.reply(`Target is already in the list !`);
                         } else {
-                            servers[index].target.push(userId);
+                            servers[index].target.push(userTarget.id);
                             updated = true;
                         }
                     } else if (commandArgs[1] == "all") {
@@ -215,20 +227,20 @@ client.on('messageCreate', async message => {
                     }
                     if (updated) {
                         writeFile('./Files/servers.json', JSON.stringify({ servers: servers }, null, 2));
-                        message.reply(`**New target !** (╯°□°）╯︵ ┻━┻\n➜ ${commandArgs[1] == "all" ? "\`all\`" : `<@${userId}>`}`);
+                        message.reply(`**New target !** (╯°□°）╯︵ ┻━┻\n➜ ${commandArgs[1] == "all" ? "\`all\`" : `\`${userTarget.username}\``}`);
                     }
 
                 } else if (commandArgs[0] == "remove") {
-                    if (commandArgs[1].startsWith("<@") && commandArgs[1].endsWith(">")) {
-                        const userId = commandArgs[1].replace("<@", "").replace(">", "");
+                    const userTarget = message.mentions.users.first();
+                    if (message.mentions.users.first()) {
                         if (servers[index].target[0] == "all") {
                             servers[index].target.splice(0, 1);
                             updated = true;
                         }
-                        if (!servers[index].target.find(id => id == userId)) {
+                        if (!servers[index].target.find(id => id == userTarget.id)) {
                             message.reply(`This user is not in the list !`);
                         } else {
-                            servers[index].target.splice(servers[index].target.indexOf(userId), 1);
+                            servers[index].target.splice(servers[index].target.indexOf(userTarget.id), 1);
                             updated = true;
                         }
                     } else if (commandArgs[1] == "all") {
@@ -237,7 +249,7 @@ client.on('messageCreate', async message => {
                     }
                     if (updated) {
                         writeFile('./Files/servers.json', JSON.stringify({ servers: servers }, null, 2));
-                        message.reply(`**Target deleted** ┬─┬ ノ( ゜-゜ノ)\n➜ ${servers[index].target.length == 0 ? "\`no more target\`" : `${commandArgs[1]}`}`);
+                        message.reply(`**Target deleted** ┬─┬ ノ( ゜-゜ノ)\n➜ ${servers[index].target.length == 0 ? "\`no more target\`" : `\`${userTarget.username}\``}`);
                     }
                 } else if (commandArgs[0] == "all") {
                     servers[index].target = ["all"];
@@ -249,11 +261,12 @@ client.on('messageCreate', async message => {
                     var list = [];
                     if (servers[index].target[0] != "all") {
                         for (user of servers[index].target) {
-                            list.push(`<@${user}>`);
+                            await message.guild.members.fetch(user).then(member => {
+                                list.push(`\`${member.user.username}\``);
+                            });
                         }
                     }
                     message.reply(`**Target list :** ${list.length == 0 ? servers[index].target[0] == "all" ? "➜\n\`all users\`" : "➜\n\`no target\`" : "\n ➜ " + list.join("\n ➜ ")}`);
-
                 }
             }
         } else if (commandName == "online") {
@@ -276,6 +289,18 @@ client.on('messageCreate', async message => {
                     writeFile('./Files/servers.json', JSON.stringify({ servers: servers }, null, 2));
                 }
             }
+        } else if (commandName == "voctime") {
+            if (commandArgs.length == 0 || message.mentions.users.first() == undefined) {
+                message.reply(`Vous devez spécifier un membre ! Ex: \n\`${servers[index].prefix}voctime \`${client.user.toString()}`);
+            } else {
+                const userTarget = message.mentions.users.first();
+                if (servers[index].users.find(u => u.id == userTarget.id)) {
+                    const duration = calculTime(servers[index].users.find(u => u.id == userTarget.id).vocTime);
+                    message.reply(`\`${userTarget.username}\`${setSentence(duration, "vocTime")}`);
+                } else {
+                    message.reply(`\`${userTarget.username}\` n'a **jamais** passé de temps dans un salon vocal  ┬─┬ ノ( ゜-゜ノ)`);
+                }
+            }
         }
     }
 });
@@ -287,6 +312,8 @@ client.on('voiceStateUpdate', async (oldMember, newMember) => {
         let server = servers.find(s => s.id == oldMember.guild.id);
         const index = servers.indexOf(server);
 
+        let users = JSON.parse(await readFile('./Files/users.json')).users;
+
         if (oldMember.channel && !newMember.channel) {
             var member = oldMember,
                 action = "out";
@@ -296,14 +323,22 @@ client.on('voiceStateUpdate', async (oldMember, newMember) => {
         }
 
         if (member) {
-            if (servers[index].users.indexOf(member.member.user.id) == -1) {
-                servers[index].users.push(member.member.user.id);
-                await writeFile('./Files/servers.json', JSON.stringify({ servers: servers }, null, 2));
-            }
+            if (server.users.find(u => u.id == member.member.user.id) == undefined) {
+                servers[index].users.push({
+                    id: member.member.user.id,
+                    vocTime: 0
+                });
 
-            if (servers[index].target == "all" || servers[index].target.find(u => u == member.member.user.id)) {
-                await voiceState(member, action, servers[index]);
-            } else { throw "Not the target" }
+            } else {
+                if (action == "out") {
+                    servers[index].users.find(u => u.id == member.member.user.id).vocTime += new Date().valueOf() - users.find(us => us.id == member.member.user.id).arrival;
+                    console.log("nowdate : " + new Date().valueOf());
+                    console.log("arrival : " + users.find(us => us.id == member.member.user.id).arrival);
+                }
+            }
+            writeFile('./Files/servers.json', JSON.stringify({ servers: servers }, null, 2));
+
+            await voiceState(member, action, servers[index]);
         }
 
     } catch (err) {
@@ -332,4 +367,4 @@ client.on('inviteCreate', async (invite) => {
     }
 })
 
-client.login("OTc5NjQ1MDY1NTk5MjU4NjI2.G8eTy_.ioOQ57y02ubmL1bEVyUJHCLeyau_AfheJHCsIc"); 
+client.login(String(process.env.TOKEN)); 

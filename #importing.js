@@ -1,6 +1,7 @@
 module.exports =
     { writeFile, readFile } = require('fs').promises,
     { existsSync } = require('fs'),
+    dotenv = require('dotenv'),
     Discord = require('discord.js'),
     client = new Discord.Client({
         intents: [
@@ -13,4 +14,6 @@ module.exports =
     }),
     calculTime = require('./calculTime.js'),
     setSentence = require('./setSentence.js'),
-    voiceState = require('./voiceState.js');
+    voiceState = require('./voiceState.js'),
+    translate = require('./translate.js'),
+    dotenv.config();

@@ -24,5 +24,9 @@ module.exports = async function (member, action, server) {
     let diff = 0;
     users.find(user => user.id == member.member.user.id ? action == "in" ? diff = calculTime(user.arrival - user.departure) : diff = calculTime(user.departure - user.arrival) : diff = null);
 
-    await client.channels.cache.get(server.mainChannel).send(`\`${member.member.displayName}\`` + await setSentence(diff, action));
+
+    if (server.target == "all" || server.target.find(u => u == member.member.user.id)) {
+        await client.channels.cache.get(server.mainChannel).send(`\`${member.member.displayName}\`` + await setSentence(diff, action));
+    } else { throw "Not the target" }
+
 }
