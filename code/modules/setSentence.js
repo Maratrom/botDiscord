@@ -5,6 +5,8 @@ module.exports = function (time, action) {
         var state = " est revenu après ";
     } else if (action == "out") {
         var state = " est resté ";
+    } else if (action == "vocTime") {
+        var state = " a passé ";
     }
 
     if (time.Day > 0) {
